@@ -100,13 +100,21 @@ int _deepHash(Object? value) {
 class BluetoothDeviceInfo {
   BluetoothDeviceInfo({
     required this.name,
+    required this.deviceClass,
+    required this.address,
   });
 
   String name;
 
+  String deviceClass;
+
+  String address;
+
   List<Object?> _toList() {
     return <Object?>[
       name,
+      deviceClass,
+      address,
     ];
   }
 
@@ -117,6 +125,8 @@ class BluetoothDeviceInfo {
     result as List<Object?>;
     return BluetoothDeviceInfo(
       name: result[0]! as String,
+      deviceClass: result[1]! as String,
+      address: result[2]! as String,
     );
   }
 
@@ -129,7 +139,7 @@ class BluetoothDeviceInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(name, other.name);
+    return _deepEquals(name, other.name) && _deepEquals(deviceClass, other.deviceClass) && _deepEquals(address, other.address);
   }
 
   @override
@@ -138,7 +148,7 @@ class BluetoothDeviceInfo {
 
   @override
   String toString() {
-    return 'BluetoothDeviceInfo(name: $name)';
+    return 'BluetoothDeviceInfo(name: $name, deviceClass: $deviceClass, address: $address)';
   }
 }
 

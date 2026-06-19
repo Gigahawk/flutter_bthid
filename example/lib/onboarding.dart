@@ -1,0 +1,76 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:permission_handler/permission_handler.dart';
+import 'package:introduction_screen/introduction_screen.dart';
+
+class OnboardingView extends StatefulWidget {
+  const OnboardingView({super.key});
+
+  @override
+  State<OnboardingView> createState() => _OnboardingViewState();
+}
+
+class _OnboardingViewState extends State<OnboardingView> {
+  bool _hasBluetoothPermission = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getBluetoothPermission();
+  }
+
+  Future<void> getBluetoothPermission() async {
+    await Permission.bluetoothConnect.request();
+    var status = await Permission.bluetoothConnect.status;
+    if (status.isDenied) {
+      return;
+    }
+    setState(() {
+      _hasBluetoothPermission = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IntroductionScreen(
+      showDoneButton: false,
+      next: const Icon(Icons.arrow_forward),
+      pages: [
+        PageViewModel(
+          title: "Bluetooth Permissions are required",
+          bodyWidget: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: _hasBluetoothPermission
+                    ? null
+                    : getBluetoothPermission,
+                child: Text(
+                  _hasBluetoothPermission
+                      ? "Permission Granted"
+                      : "Request Permission",
+                ),
+              ),
+            ],
+          ),
+        ),
+        PageViewModel(
+          title: "Select a device to connect to",
+          bodyWidget: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: null,
+                child: Text(
+              "asdf"
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      canProgress: (page) => _hasBluetoothPermission,
+    );
+  }
+}

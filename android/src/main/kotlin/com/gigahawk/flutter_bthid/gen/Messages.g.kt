@@ -194,18 +194,24 @@ class FlutterError (
 
 /** Generated class from Pigeon that represents data sent in messages. */
 data class BluetoothDeviceInfo (
-  val name: String
+  val name: String,
+  val deviceClass: String,
+  val address: String
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): BluetoothDeviceInfo {
       val name = pigeonVar_list[0] as String
-      return BluetoothDeviceInfo(name)
+      val deviceClass = pigeonVar_list[1] as String
+      val address = pigeonVar_list[2] as String
+      return BluetoothDeviceInfo(name, deviceClass, address)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       name,
+      deviceClass,
+      address,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -216,16 +222,18 @@ data class BluetoothDeviceInfo (
       return true
     }
     val other = other as BluetoothDeviceInfo
-    return MessagesPigeonUtils.deepEquals(this.name, other.name)
+    return MessagesPigeonUtils.deepEquals(this.name, other.name) && MessagesPigeonUtils.deepEquals(this.deviceClass, other.deviceClass) && MessagesPigeonUtils.deepEquals(this.address, other.address)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + MessagesPigeonUtils.deepHash(this.name)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.deviceClass)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.address)
     return result
   }
   override fun toString(): String {
-    return "BluetoothDeviceInfo(name=$name)"
+    return "BluetoothDeviceInfo(name=$name, deviceClass=$deviceClass, address=$address)"
   }
 }
 private open class MessagesPigeonCodec : StandardMessageCodec() {

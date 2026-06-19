@@ -12,8 +12,10 @@ import 'package:pigeon/pigeon.dart';
 )
 
 class BluetoothDeviceInfo {
-  BluetoothDeviceInfo({required this.name,});
+  BluetoothDeviceInfo({required this.name, required this.deviceClass, required this.address});
   final String name;
+  final String deviceClass;
+  final String address;
 }
 
 @HostApi()

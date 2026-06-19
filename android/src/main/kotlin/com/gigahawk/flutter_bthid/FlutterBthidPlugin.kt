@@ -10,7 +10,9 @@ import com.gigahawk.flutter_bthid.gen.FlutterBthidApi
 
 private fun AndroidBluetoothDevice.toInfo(): BluetoothDeviceInfo {
     return BluetoothDeviceInfo (
-        name = this.name
+        name = this.name,
+        deviceClass = getDeviceClassName(this.bluetoothClass.deviceClass),
+        address = this.address
     )
 }
 
