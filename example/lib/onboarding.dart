@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bthid_example/device_select.dart';
 import 'dart:async';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -57,17 +58,7 @@ class _OnboardingViewState extends State<OnboardingView> {
         ),
         PageViewModel(
           title: "Select a device to connect to",
-          bodyWidget: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton(
-                onPressed: null,
-                child: Text(
-              "asdf"
-                ),
-              ),
-            ],
-          ),
+          bodyWidget: DeviceSelectView()
         ),
       ],
       canProgress: (page) => _hasBluetoothPermission,
