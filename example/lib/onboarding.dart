@@ -17,6 +17,7 @@ class OnboardingView extends StatefulWidget {
 class _OnboardingViewState extends State<OnboardingView> {
   bool _hasBluetoothPermission = false;
   bool _isConnected = false;
+  StreamSubscription? _connectionStateSubscription;
 
   final BluetoothHidManager manager = BluetoothHidManager();
 
@@ -24,7 +25,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   void initState() {
     super.initState();
     getBluetoothPermission();
-    manager.connectionStateStream.listen((device) {
+    _connectionStateSubscription = manager.connectionStateStream.listen((device) {
       setState(() {
         _isConnected = device != null;
       });
@@ -91,5 +92,11 @@ class _OnboardingViewState extends State<OnboardingView> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _connectionStateSubscription?.cancel();
+    super.dispose();
   }
 }

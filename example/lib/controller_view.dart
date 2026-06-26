@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
 
@@ -13,6 +15,7 @@ class _ControllerViewState extends State<ControllerView> {
 
   int _count = 0;
   String _device = "";
+  StreamSubscription? _connectionStateSubscription;
 
   @override
   void initState() {
@@ -25,7 +28,7 @@ class _ControllerViewState extends State<ControllerView> {
     setState(() {
       _device = dev?.name ?? "";
     });
-    manager.connectionStateStream.listen((device) {
+    _connectionStateSubscription = manager.connectionStateStream.listen((device) {
       if (device == null) {
         if (mounted) {
           Navigator.of(context).pop();
@@ -39,6 +42,7 @@ class _ControllerViewState extends State<ControllerView> {
 
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text('Connected to $_device')),
@@ -56,5 +60,11 @@ class _ControllerViewState extends State<ControllerView> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
+  }
+
+  @override
+  void dispose() {
+    _connectionStateSubscription?.cancel();
+    super.dispose();
   }
 }

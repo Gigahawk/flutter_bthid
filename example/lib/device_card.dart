@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
 import 'package:flutter_bthid/gen/messages.g.dart';
@@ -14,6 +16,7 @@ class DeviceCard extends StatefulWidget {
 class _DeviceCardState extends State<DeviceCard> {
   final BluetoothHidManager manager = BluetoothHidManager();
   var connected = false;
+  StreamSubscription? _connectionStateSubscription;
 
   void checkDeviceMatch(BluetoothDeviceInfo? device) {
     final c = device == widget.device;
@@ -32,7 +35,7 @@ class _DeviceCardState extends State<DeviceCard> {
   void initStateAsync() async {
     final device = await manager.getConnectedDevice();
     checkDeviceMatch(device);
-    manager.connectionStateStream.listen(checkDeviceMatch);
+    _connectionStateSubscription = manager.connectionStateStream.listen(checkDeviceMatch);
   }
 
   @override
@@ -51,6 +54,12 @@ class _DeviceCardState extends State<DeviceCard> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _connectionStateSubscription?.cancel();
+    super.dispose();
   }
 
 
