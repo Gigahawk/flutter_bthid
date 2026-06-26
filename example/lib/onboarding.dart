@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bthid/flutter_bthid.dart';
+import 'package:flutter_bthid_example/controller_view.dart';
 import 'package:flutter_bthid_example/device_select.dart';
 import 'dart:async';
 
@@ -14,11 +16,19 @@ class OnboardingView extends StatefulWidget {
 
 class _OnboardingViewState extends State<OnboardingView> {
   bool _hasBluetoothPermission = false;
+  bool _isConnected = false;
+
+  final BluetoothHidManager manager = BluetoothHidManager();
 
   @override
   void initState() {
     super.initState();
     getBluetoothPermission();
+    manager.connectionStateStream.listen((device) {
+      setState(() {
+        _isConnected = device != null;
+      });
+    });
   }
 
   Future<void> getBluetoothPermission() async {
@@ -45,7 +55,8 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return IntroductionScreen(
-      showDoneButton: false,
+      showDoneButton: _isConnected,
+      done: const Text("Done"),
       next: const Icon(Icons.arrow_forward),
       pages: [
         PageViewModel(
@@ -72,6 +83,13 @@ class _OnboardingViewState extends State<OnboardingView> {
         ),
       ],
       canProgress: (page) => _hasBluetoothPermission,
+      onDone: () {
+        print("Done onboarding");
+        // Use regular push? that means we can go back to change devices
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const ControllerView())
+        );
+      },
     );
   }
 }
