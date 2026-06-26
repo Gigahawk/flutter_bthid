@@ -12,6 +12,12 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 
 import com.gigahawk.flutter_bthid.gen.BluetoothDeviceInfo
 import com.gigahawk.flutter_bthid.gen.FlutterBthidApi
+import com.gigahawk.flutter_bthid.gen.BluetoothEventsApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private fun AndroidBluetoothDevice.toInfo(): BluetoothDeviceInfo {
     return BluetoothDeviceInfo (
@@ -24,14 +30,16 @@ private fun AndroidBluetoothDevice.toInfo(): BluetoothDeviceInfo {
 class FlutterBthidPlugin : FlutterPlugin {
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         val context = binding.applicationContext
-        FlutterBthidApi.setUp(binding.binaryMessenger, FlutterBthidApiImplementation(context))
+        val eventsApi = BluetoothEventsApi(binding.binaryMessenger)
+        FlutterBthidApi.setUp(binding.binaryMessenger, FlutterBthidApiImplementation(context, eventsApi))
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {}
 }
 
 private class FlutterBthidApiImplementation(
-    private val context: Context
+    private val context: Context,
+    private val eventsApi: BluetoothEventsApi
 ) : FlutterBthidApi {
 
     private val tag = "FlutterBthidApiImpl"
@@ -41,6 +49,10 @@ private class FlutterBthidApiImplementation(
 
     private var hidDevice: BluetoothHidDevice? = null
     private var targetDevice: AndroidBluetoothDevice? = null
+        set(value) {
+            field = value
+            eventsApi.onConnectionStateChanged(value?.toInfo()) {}
+        }
 
     private val _callback =
         object : BluetoothHidDevice.Callback() {
@@ -97,8 +109,11 @@ private class FlutterBthidApiImplementation(
         )
     }
 
-
-
+    private fun getDevice(device: BluetoothDeviceInfo): AndroidBluetoothDevice? {
+        return adapter.bondedDevices.firstOrNull {
+            it.name == device.name && it.address == device.address
+        }
+    }
 
     override fun getPairedDevices(callback: (Result<List<BluetoothDeviceInfo>?>) -> Unit) {
         if (adapter == null){
@@ -119,11 +134,20 @@ private class FlutterBthidApiImplementation(
                     hidDevice = proxy as? BluetoothHidDevice
 
                     hidDevice?.let { hd ->
-                        val connected = hd.connectedDevices;
-                        if (connected.isNotEmpty()) {
+                        if (hd.connectedDevices.isNotEmpty()) {
                             // TODO: What do the other index names contain?
-                            Log.d(tag, "Found already connected device: ${connected[0].name}")
-                            targetDevice = connected[0]
+                            Log.d(tag, "Found already connected device: ${hd.connectedDevices[0].name}")
+                            targetDevice = hd.connectedDevices[0]
+                        }
+
+                        if (hd.connectedDevices.size > 1) {
+                            Log.d(tag, "Found more than one connected device: ${hd.connectedDevices.map { it.name }}")
+                            for (device in hd.connectedDevices) {
+                                if (targetDevice != device) {
+                                    Log.d(tag, "Disconnecting device: ${device.name}")
+                                    hd.disconnect(device)
+                                }
+                            }
                         }
 
                         Log.d(tag, "Calling registerApp")
@@ -155,4 +179,56 @@ private class FlutterBthidApiImplementation(
         callback(Result.success(Unit))
     }
 
+    override fun connect(device: BluetoothDeviceInfo, callback: (Result<Unit>) -> Unit) {
+        Log.d(tag, "Attemting to connect to ${device.name} with address ${device.address}")
+        val androidDevice = getDevice(device)
+        androidDevice?.let { d ->
+            Log.d(tag, "Device found, attempting to connect")
+
+            hidDevice?.let { hd ->
+                CoroutineScope(Dispatchers.Default).launch {
+                    // TODO: Only one device connection at a time is supported for now
+                    // What does it even mean for a keyboard to be simultaneously connected to
+                    // multiple devices? keystrokes are sent to all connected devices?
+                    // What about capslock state being different??
+                    if (targetDevice != null) {
+                        Log.d(tag, "Disconnecting from already connected device ${targetDevice?.name}")
+                        hd.disconnect(targetDevice)
+                        Log.d(tag, "Waiting for device to disconnect")
+
+                        val success = withTimeoutOrNull(5000) {
+                            while (targetDevice!=null) {
+                                delay(100)
+                            }
+                            true
+                        }
+                        if (success == null) {
+                            Log.d(tag, "Could not disconnect from device after 5s")
+                            callback(Result.failure(Exception("Could not disconnect from device after 5s")))
+                            return@launch
+                        }
+                        Log.d(tag, "Device disconnected")
+                    }
+
+                    val result = hd.connect(d)
+                    if (!result) {
+                        Log.d(tag, "Connect request rejected")
+                        callback(Result.failure(Exception("Connect request rejected")))
+                    }
+                    callback(Result.success(Unit))
+
+                }
+            } ?: {
+                Log.d(tag, "hidDevice is null")
+                callback(Result.failure(Exception("hidDevice is null")))
+            }
+        } ?: run {
+            Log.d(tag, "Device not found")
+            callback(Result.failure(Exception("Device not found")))
+        }
+    }
+
+    override fun getConnectedDevice(callback: (Result<BluetoothDeviceInfo?>) -> Unit) {
+        callback(Result.success(targetDevice?.toInfo()))
+    }
 }

@@ -24,5 +24,16 @@ abstract class FlutterBthidApi {
   void init();
 
   @async
+  void connect(BluetoothDeviceInfo device);
+
+  @async
+  BluetoothDeviceInfo? getConnectedDevice();
+
+  @async
   List<BluetoothDeviceInfo>? getPairedDevices();
+}
+
+@FlutterApi()
+abstract class BluetoothEventsApi {
+  void onConnectionStateChanged(BluetoothDeviceInfo? device);
 }

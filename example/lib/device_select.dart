@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
 import 'package:flutter_bthid/gen/messages.g.dart';
+import 'package:flutter_bthid_example/device_card.dart';
 
 class DeviceSelectView extends StatefulWidget {
   const DeviceSelectView({super.key});
@@ -38,12 +39,7 @@ class _DeviceSelectViewState extends State<DeviceSelectView> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: devices.length,
       itemBuilder: (BuildContext context, int index) {
-        return ListTile(
-          title: Text(devices[index].name),
-          subtitle: Text("${devices[index].address}\n${devices[index].deviceClass}"),
-          onTap: () {}
-
-        );
+        return DeviceCard(device: devices[index]);
       }
     );
   }
