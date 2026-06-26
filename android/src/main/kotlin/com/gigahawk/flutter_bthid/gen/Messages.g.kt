@@ -261,6 +261,7 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface FlutterBthidApi {
+  fun init(callback: (Result<Unit>) -> Unit)
   fun getPairedDevices(callback: (Result<List<BluetoothDeviceInfo>?>) -> Unit)
 
   companion object {
@@ -272,6 +273,23 @@ interface FlutterBthidApi {
     @JvmOverloads
     fun setUp(binaryMessenger: BinaryMessenger, api: FlutterBthidApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_bthid.FlutterBthidApi.init$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.init{ result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MessagesPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(MessagesPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_bthid.FlutterBthidApi.getPairedDevices$separatedMessageChannelSuffix", codec)
         if (api != null) {

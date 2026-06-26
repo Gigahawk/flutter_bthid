@@ -22,10 +22,20 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Future<void> getBluetoothPermission() async {
-    await Permission.bluetoothConnect.request();
-    var status = await Permission.bluetoothConnect.status;
-    if (status.isDenied) {
-      return;
+    final permissions = [
+      Permission.bluetoothConnect,
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      //Permission.bluetooth,
+    ];
+
+    for (final perm in permissions) {
+      print("Requesting permission: ${perm.toString()}");
+      await perm.request();
+      if (await perm.status.isDenied) {
+        print("Permission denied: ${perm.toString()}");
+        return;
+      }
     }
     setState(() {
       _hasBluetoothPermission = true;

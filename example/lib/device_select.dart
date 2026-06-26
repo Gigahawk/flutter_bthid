@@ -12,15 +12,21 @@ class DeviceSelectView extends StatefulWidget {
 class _DeviceSelectViewState extends State<DeviceSelectView> {
   final BluetoothHidManager manager = BluetoothHidManager();
 
-  final List<BluetoothDeviceInfo> devices = [];
+  List<BluetoothDeviceInfo> devices = [];
 
   @override
   void initState() {
     super.initState();
-    manager.getPairedDevices().then((value) {
-      setState(() {
-        devices.addAll(value);
-      });
+    btInit();
+  }
+
+  void btInit() async {
+    print("Initing manager");
+    await manager.init();
+    print("Getting paired devices");
+    final d = await manager.getPairedDevices();
+    setState(() {
+      devices = d;
     });
   }
 

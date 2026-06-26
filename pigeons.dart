@@ -21,5 +21,8 @@ class BluetoothDeviceInfo {
 @HostApi()
 abstract class FlutterBthidApi {
   @async
+  void init();
+
+  @async
   List<BluetoothDeviceInfo>? getPairedDevices();
 }
