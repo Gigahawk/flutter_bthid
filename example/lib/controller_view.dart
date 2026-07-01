@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
+import 'package:flutter_bthid_example/trackpad.dart';
 
 class ControllerView extends StatefulWidget {
   const ControllerView({super.key});
@@ -12,6 +14,8 @@ class ControllerView extends StatefulWidget {
 
 class _ControllerViewState extends State<ControllerView> {
   final BluetoothHidManager manager = BluetoothHidManager();
+  final FocusNode _focusNode = FocusNode();
+  final TextEditingController _textController = TextEditingController();
 
   int _count = 0;
   String _device = "";
@@ -20,7 +24,15 @@ class _ControllerViewState extends State<ControllerView> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+
     getDeviceName();
+  }
+
+  void _enableKeyboardInput() {
+    _focusNode.requestFocus();
+    SystemChannels.textInput.invokeMethod('TextInput.show');
   }
 
   void getDeviceName() async {
@@ -39,14 +51,55 @@ class _ControllerViewState extends State<ControllerView> {
         _device = device?.name ?? "";
       });
     });
-
   }
+
+  //void _handleKeyEvent(KeyEvent event) {
+  //  if (event is KeyDownEvent) {
+  //    print("Key down: ${event.logicalKey.debugName}");
+  //  } else if (event is KeyUpEvent) {
+  //    print("Key up: ${event.logicalKey.debugName}");
+  //  } else {
+  //    print("Key event ${event.runtimeType}");
+  //  }
+  //}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text('Connected to $_device')),
-        body: Center(child: Text('You have pressed the button $_count times.')),
+        body: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(child: Text('You have pressed the button $_count times.')),
+                  TrackpadSurface(),
+                ],
+              ),
+
+              Positioned(
+                left: -1000,
+                child: SizedBox(
+                  width: 1,
+                  height: 1,
+                  child: TextField(
+                    focusNode: _focusNode,
+                    controller: _textController,
+                    autofocus: true,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    // TODO: enter and backspace doesn't seem to work?
+                    onChanged: (value) {
+                      if (value.isEmpty) return;
+                      print("Input: $value");
+                      _textController.clear();
+                    },
+                    decoration: const InputDecoration(border: InputBorder.none),
+                  )
+                )
+              )
+            ]
+        ),
         bottomNavigationBar: BottomAppBar(
           shape: const CircularNotchedRectangle(),
           child: Container(height: 50.0),
@@ -54,6 +107,7 @@ class _ControllerViewState extends State<ControllerView> {
         floatingActionButton: FloatingActionButton(
           onPressed: () => setState(() {
             _count++;
+            _enableKeyboardInput();
           }),
           tooltip: 'Increment Counter',
           child: const Icon(Icons.add),
@@ -64,6 +118,7 @@ class _ControllerViewState extends State<ControllerView> {
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _connectionStateSubscription?.cancel();
     super.dispose();
   }
