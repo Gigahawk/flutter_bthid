@@ -231,4 +231,38 @@ private class FlutterBthidApiImplementation(
     override fun getConnectedDevice(callback: (Result<BluetoothDeviceInfo?>) -> Unit) {
         callback(Result.success(targetDevice?.toInfo()))
     }
+
+    override fun sendReport(
+        data: List<Long>,
+        callback: (Result<Unit>) -> Unit
+    ) {
+        if (hidDevice == null) {
+            callback(Result.failure(Exception("hidDevice is null")));
+            return
+        }
+        if (targetDevice == null) {
+            callback(Result.failure(Exception("targetDevice is null")));
+            return
+        }
+        val reportData = ByteArray(data.size)
+        data.forEachIndexed { index, value ->
+            if (value > 255 || value < 0) {
+                Log.d(tag, "Invalid value at index $index: $value")
+                callback(Result.failure(Exception("Invalid value at index $index: $value")))
+                return
+            }
+            reportData[index] = value.toByte()
+        }
+
+        // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
+        val success = hidDevice!!.sendReport(targetDevice, 0, reportData)
+
+        if (success) {
+            Log.d(tag, "Successfully sent report")
+            callback(Result.success(Unit))
+        } else {
+            Log.e(tag, "Failed to send HID report")
+            callback(Result.failure(Exception("Failed to send HID report")))
+        }
+    }
 }

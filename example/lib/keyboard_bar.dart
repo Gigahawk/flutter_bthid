@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bthid/flutter_bthid.dart';
 
 class KeyboardBar extends StatefulWidget {
   const KeyboardBar({super.key});
@@ -10,6 +11,7 @@ class KeyboardBar extends StatefulWidget {
 }
 
 class _KeyboardBarState extends State<KeyboardBar> {
+  final BluetoothHidManager hidManager = BluetoothHidManager();
   final ScrollController _textScrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _directTextController = TextEditingController();
@@ -118,6 +120,7 @@ class _KeyboardBarState extends State<KeyboardBar> {
                 } else if (value.length > 1) {
                   String char = value.substring(1);
                   print("Sending ${jsonEncode(char)}");
+                  hidManager.sendAKey();
                 }
 
                 _resetDirectContents();

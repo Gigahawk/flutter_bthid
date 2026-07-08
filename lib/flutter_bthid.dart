@@ -46,6 +46,20 @@ class BluetoothHidManager extends BluetoothEventsApi {
     return await _api.getConnectedDevice();
   }
 
+  Future<void> sendReport(List<int> data) async {
+    return await _api.sendReport(data);
+  }
+
+  // TODO: idk
+  Future<void> sendAKey() async {
+    const int key = 0x04;
+    await sendReport([0x00, key]);
+    await Future.delayed(const Duration(milliseconds: 1000));
+    await sendReport([0x00]);
+
+  }
+
+
   @override
   void onConnectionStateChanged(BluetoothDeviceInfo? device) {
     _connectionStateController.add(device);
