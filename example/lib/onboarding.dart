@@ -56,7 +56,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return IntroductionScreen(
-      showDoneButton: _isConnected,
+      showDoneButton: _hasBluetoothPermission,
       done: const Text("Done"),
       next: const Icon(Icons.arrow_forward),
       pages: [
@@ -77,10 +77,6 @@ class _OnboardingViewState extends State<OnboardingView> {
               ),
             ],
           ),
-        ),
-        PageViewModel(
-          title: "Select a device to connect to",
-          bodyWidget: DeviceSelectView()
         ),
       ],
       canProgress: (page) => _hasBluetoothPermission,

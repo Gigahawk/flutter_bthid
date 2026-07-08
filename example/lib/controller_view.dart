@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
+import 'package:flutter_bthid_example/keyboard_bar.dart';
 import 'package:flutter_bthid_example/trackpad.dart';
+
+import 'controller_type.dart';
+import 'device_select_screen.dart';
 
 class ControllerView extends StatefulWidget {
   const ControllerView({super.key});
@@ -17,7 +21,19 @@ class _ControllerViewState extends State<ControllerView> {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _textController = TextEditingController();
 
-  int _count = 0;
+  final List<ControllerType> _controllerTypes = [
+    ControllerType(name: "Mouse/Keyboard", icon: Icons.mouse_outlined, widget: TrackpadSurface()),
+    ControllerType(name: "Multimedia", icon: Icons.live_tv, widget: Text("Multimedia")),
+    ControllerType(name: "PC Keyboard", icon: Icons.keyboard_outlined, widget: Text("PC Keyboard")),
+    ControllerType(name: "Numpad", icon: Icons.apps, widget: Text("Numpad")),
+    ControllerType(name: "Presenter", icon: Icons.co_present_outlined, widget: Text("Presenter")),
+  ];
+
+  int _drawerSelectionIndex = 0;
+  bool _showKeyboardBar = false;
+
+  static const double _drawerPadding = 28.0;
+
   String _device = "";
   StreamSubscription? _connectionStateSubscription;
 
@@ -41,12 +57,6 @@ class _ControllerViewState extends State<ControllerView> {
       _device = dev?.name ?? "";
     });
     _connectionStateSubscription = manager.connectionStateStream.listen((device) {
-      if (device == null) {
-        if (mounted) {
-          Navigator.of(context).pop();
-          return;
-        }
-      }
       setState(() {
         _device = device?.name ?? "";
       });
@@ -66,53 +76,98 @@ class _ControllerViewState extends State<ControllerView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Connected to $_device')),
-        body: Stack(
+      resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Center(child: Text('You have pressed the button $_count times.')),
-                  TrackpadSurface(),
-                ],
+              Text(_controllerTypes[_drawerSelectionIndex].name),
+              Text(
+                  _device.isNotEmpty ? "Connected to $_device" : "Not connected",
+                style: const TextStyle(
+                  fontSize: 14.0,
+                ),
+              )
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.keyboard_outlined),
+              onPressed: () {
+                setState(() {
+                  _showKeyboardBar = !_showKeyboardBar;
+                });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () {},
+            ),
+
+          ],
+        ),
+        drawer: NavigationDrawer(
+            selectedIndex: _drawerSelectionIndex,
+            onDestinationSelected: (int index) {
+              if (index < _controllerTypes.length) {
+                setState(() {
+                  _drawerSelectionIndex = index;
+                });
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const DeviceSelectScreen())
+                );
+              }
+            },
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: _drawerPadding, vertical: 12.0),
+                child: Text (
+                    "flutter_bthid demo",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    )
+                )
               ),
 
-              Positioned(
-                left: -1000,
-                child: SizedBox(
-                  width: 1,
-                  height: 1,
-                  child: TextField(
-                    focusNode: _focusNode,
-                    controller: _textController,
-                    autofocus: true,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    // TODO: enter and backspace doesn't seem to work?
-                    onChanged: (value) {
-                      if (value.isEmpty) return;
-                      print("Input: $value");
-                      _textController.clear();
-                    },
-                    decoration: const InputDecoration(border: InputBorder.none),
+              Divider(),
+              const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: _drawerPadding, vertical: 8.0),
+                  child: Text (
+                      "Controls",
                   )
-                )
+              ),
+
+              for (var ct in _controllerTypes)
+                ct.dest,
+
+              Divider(),
+              const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: _drawerPadding, vertical: 8.0),
+                  child: Text (
+                    "Confiugration",
+                  )
+              ),
+
+              const NavigationDrawerDestination(
+                  icon: Icon(Icons.devices), label: Text("Bluetooth devices")
+              ),
+            ],
+        ),
+        body:  Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+                child: _controllerTypes[_drawerSelectionIndex].widget
+            ),
+            if (_showKeyboardBar)
+              Container(
+                padding: EdgeInsets.all(16.0),
+                child: KeyboardBar(),
               )
-            ]
+          ],
         ),
-        bottomNavigationBar: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          child: Container(height: 50.0),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => setState(() {
-            _count++;
-            _enableKeyboardInput();
-          }),
-          tooltip: 'Increment Counter',
-          child: const Icon(Icons.add),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
