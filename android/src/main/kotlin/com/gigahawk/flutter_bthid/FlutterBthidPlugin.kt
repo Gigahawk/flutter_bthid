@@ -255,7 +255,7 @@ private class FlutterBthidApiImplementation(
         }
 
         // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
-        val success = hidDevice!!.sendReport(targetDevice, 0, reportData)
+        val success = hidDevice!!.sendReport(targetDevice, 1, reportData)
 
         if (success) {
             Log.d(tag, "Successfully sent report")

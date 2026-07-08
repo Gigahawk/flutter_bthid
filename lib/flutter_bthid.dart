@@ -53,9 +53,9 @@ class BluetoothHidManager extends BluetoothEventsApi {
   // TODO: idk
   Future<void> sendAKey() async {
     const int key = 0x04;
-    await sendReport([0x00, key]);
+    await sendReport([0x00, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00]);
     await Future.delayed(const Duration(milliseconds: 1000));
-    await sendReport([0x00]);
+    await sendReport([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
   }
 
