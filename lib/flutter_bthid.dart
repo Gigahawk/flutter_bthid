@@ -1,11 +1,16 @@
 
 import 'dart:async';
 import 'gen/messages.g.dart';
+import 'mouse_state.dart';
 
 final FlutterBthidApi _api = FlutterBthidApi();
 
 class BluetoothHidManager extends BluetoothEventsApi {
   static final BluetoothHidManager _singleton = BluetoothHidManager._internal();
+
+  MouseState mouseState = MouseState();
+  // TODO: this is hardcoded to 2 for some reason??? Something to do with HID descriptor
+  static const int mouseReportId = 2;
 
   bool _initialized = false;
   final StreamController<BluetoothDeviceInfo?> _connectionStateController =
@@ -50,6 +55,10 @@ class BluetoothHidManager extends BluetoothEventsApi {
     return await _api.sendReport(id, data);
   }
 
+  Future<void> sendMouseReport(List<int> data) async {
+    return await sendReport(mouseReportId, data);
+  }
+
   // TODO: idk
   Future<void> sendAKey() async {
     const int key = 0x04;
@@ -62,18 +71,25 @@ class BluetoothHidManager extends BluetoothEventsApi {
   }
 
   Future<void> moveMouse(int x, int y) async {
-    // TODO: this is hardcoded to 2 for some reason??? Something to do with HID descriptor
-    const int reportId = 2;
-    // TODO: support sending buttons
-    final List<int> report = [
-      0x00,                   // Byte 0: Buttons bitmask
-      x.clamp(-127, 127) & 0xFF,  // Byte 1: X-axis (8-bit)
-      y.clamp(-127, 127) & 0xFF,  // Byte 2: Y-axis (8-bit)
-      0x00,                      // Byte 3: Vertical Wheel
-      0x00,                      // Byte 4: Horizontal Wheel (if supported)
-    ];
+    await sendMouseReport(mouseState.move(x, y));
+  }
 
-    await sendReport(reportId, report);
+  Future<void> mouseButton(MouseButtonMask button, bool pressed) async {
+    await sendMouseReport(mouseState.mouseButton(button, pressed));
+  }
+
+  Future<void> scrollMouse(int x, int y) async {
+    await sendMouseReport(mouseState.scroll(x, y));
+  }
+
+  Future<void> clickMouseButton(MouseButtonMask button, Duration duration, {bool force = false}) async {
+    if (!force && mouseState.isMouseButtonDown(button)) {
+      print("Mouse button $button already down, not pressing");
+      return;
+    }
+    await sendMouseReport(mouseState.mouseButton(button, true));
+    await Future.delayed(duration);
+    await sendMouseReport(mouseState.mouseButton(button, false));
   }
 
 
