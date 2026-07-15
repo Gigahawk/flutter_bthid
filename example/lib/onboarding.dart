@@ -16,20 +16,20 @@ class OnboardingView extends StatefulWidget {
 
 class _OnboardingViewState extends State<OnboardingView> {
   bool _hasBluetoothPermission = false;
-  bool _isConnected = false;
-  StreamSubscription? _connectionStateSubscription;
 
   final BluetoothHidManager manager = BluetoothHidManager();
 
   @override
   void initState() {
     super.initState();
-    getBluetoothPermission();
-    _connectionStateSubscription = manager.connectionStateStream.listen((device) {
-      setState(() {
-        _isConnected = device != null;
-      });
-    });
+    initStateAsync();
+  }
+
+  Future<void> initStateAsync() async {
+    await getBluetoothPermission();
+    if (_hasBluetoothPermission) {
+      _onboardingDone();
+    }
   }
 
   Future<void> getBluetoothPermission() async {
@@ -51,6 +51,13 @@ class _OnboardingViewState extends State<OnboardingView> {
     setState(() {
       _hasBluetoothPermission = true;
     });
+  }
+
+  void _onboardingDone() {
+    print("Done onboarding");
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const ControllerView())
+    );
   }
 
   @override
@@ -80,19 +87,7 @@ class _OnboardingViewState extends State<OnboardingView> {
         ),
       ],
       canProgress: (page) => _hasBluetoothPermission,
-      onDone: () {
-        print("Done onboarding");
-        // Use regular push? that means we can go back to change devices
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ControllerView())
-        );
-      },
+      onDone: _onboardingDone,
     );
-  }
-
-  @override
-  void dispose() {
-    _connectionStateSubscription?.cancel();
-    super.dispose();
   }
 }
