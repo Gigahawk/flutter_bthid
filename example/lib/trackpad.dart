@@ -18,21 +18,26 @@ class TrackpadSurface extends StatelessWidget {
         Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onPanDown: (details) {
-              print('Finger down: ${details.localPosition}');
+            onTap: () {
+              print("Finger tapped");
             },
-            onPanUpdate: (details) {
-              print('Pos: ${details.localPosition}  Delta: ${details.delta}');
-              // TODO: Create setting for this
-              double sensitivity = 1.5;
-              double dx = details.delta.dx * sensitivity;
-              double dy = details.delta.dy * sensitivity;
+            onScaleUpdate: (details) {
+              if (details.pointerCount == 1) {
 
-              hidManager.moveMouse(dx.toInt(), dy.toInt());
+                print('Finger drag, Pos: ${details.focalPoint}  Delta: ${details.focalPointDelta}');
+                // TODO: Create setting for this
+                double sensitivity = 1.5;
+                double dx = details.focalPointDelta.dx * sensitivity;
+                double dy = details.focalPointDelta.dy * sensitivity;
 
-            },
-            onPanEnd: (details) {
-              print('Finger up. Velocity: ${details.velocity}');
+                hidManager.moveMouse(dx.toInt(), dy.toInt());
+              }
+              else if (details.pointerCount == 2) {
+                double dy = details.focalPointDelta.dy;
+                double dx = details.focalPointDelta.dx;
+                print("Scroll $dx, $dy");
+              }
+
             },
             child: Container(
               margin: const EdgeInsets.all(16.0),
