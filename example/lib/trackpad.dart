@@ -2,14 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bthid/flutter_bthid.dart';
 import 'package:flutter_bthid/mouse_state.dart';
 
-class TrackpadSurface extends StatelessWidget {
-  TrackpadSurface({super.key, this.color = Colors.blueGrey});
+class TrackpadSurface extends StatefulWidget {
+  const TrackpadSurface({super.key, this.color = Colors.blueGrey});
+  final MaterialColor color;
+
+  @override
+  State<TrackpadSurface> createState() => _TrackpadSurfaceState();
+}
+
+class _TrackpadSurfaceState extends State<TrackpadSurface> {
 
   final BluetoothHidManager hidManager = BluetoothHidManager();
 
-  final MaterialColor color;
+  double _moveRemainderDx = 0.0;
+  double _moveRemainderDy = 0.0;
+  double _scrollRemainderDx = 0.0;
+  double _scrollRemainderDy = 0.0;
+
+  void _resetScroll() {
+    _scrollRemainderDx = 0.0;
+    _scrollRemainderDy = 0.0;
+    hidManager.mouseState.resetScroll();
+  }
+
+  void _resetMove() {
+    _moveRemainderDx = 0.0;
+    _moveRemainderDy = 0.0;
+    hidManager.mouseState.resetMove();
+  }
+
   get decoration =>
-      BoxDecoration(color: color, borderRadius: BorderRadius.circular(16.0));
+      BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(16.0));
 
   @override
   Widget build(BuildContext context) {
@@ -31,28 +54,42 @@ class TrackpadSurface extends StatelessWidget {
                 print('Finger drag, Pos: ${details.focalPoint}  Delta: ${details.focalPointDelta}');
                 // TODO: Create setting for this
                 double sensitivity = 1.5;
-                double dx = details.focalPointDelta.dx * sensitivity;
-                double dy = details.focalPointDelta.dy * sensitivity;
+                _moveRemainderDx += details.focalPointDelta.dx * sensitivity;
+                _moveRemainderDy += details.focalPointDelta.dy * sensitivity;
 
                 // Don't scroll while we move
-                hidManager.mouseState.resetScroll();
-                // TODO: This stops working when we move the mouse too slowly,
-                // Especially noticeable with two finger scrolling since focal
-                // point between two fingers can be really slowly moved.
-                // We should be banking all move commands into "queue" that
-                // dispatches when integer amounts of movement have been recorded
+                _resetScroll();
+
+                if (_moveRemainderDx.abs() < 1.0 && _moveRemainderDy.abs() < 1.0) {
+                  return;
+                }
+
+                int dx = _moveRemainderDx.truncate();
+                int dy = _moveRemainderDy.truncate();
+                _moveRemainderDx -= dx;
+                _moveRemainderDy -= dy;
 
                 hidManager.moveMouse(dx.toInt(), dy.toInt());
               }
               else if (details.pointerCount == 2) {
                 // TODO: support flipping scroll direction
-                double sensitivity = 1.5;
-                double dx = details.focalPointDelta.dx * sensitivity;
-                double dy = details.focalPointDelta.dy * sensitivity;
-                print("Scroll $dx, $dy");
+                double sensitivity = 0.3;
+                _scrollRemainderDx += details.focalPointDelta.dx * sensitivity;
+                _scrollRemainderDy += details.focalPointDelta.dy * sensitivity;
 
                 // Don't move while we scroll
-                hidManager.mouseState.resetMove();
+                _resetMove();
+
+                if (_scrollRemainderDx.abs() < 1.0 && _scrollRemainderDy.abs() < 1.0) {
+                  return;
+                }
+
+                int dx = _scrollRemainderDx.truncate();
+                int dy = _scrollRemainderDy.truncate();
+                print("Scroll $dx, $dy");
+                _scrollRemainderDx -= dx;
+                _scrollRemainderDy -= dy;
+
                 hidManager.scrollMouse(dx.toInt(), dy.toInt());
               }
             },
@@ -89,7 +126,7 @@ class TrackpadSurface extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: color,
+                        color: widget.color,
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                       child: const Center(
@@ -118,7 +155,7 @@ class TrackpadSurface extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: color,
+                        color: widget.color,
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                       child: const Center(
