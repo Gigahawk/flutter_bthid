@@ -257,14 +257,14 @@ class FlutterBthidApi {
     return pigeonVar_replyValue as BluetoothDeviceInfo?;
   }
 
-  Future<void> sendReport(List<int> data) async {
+  Future<void> sendReport(int id, List<int> data) async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.flutter_bthid.FlutterBthidApi.sendReport$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[data]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id, data]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(

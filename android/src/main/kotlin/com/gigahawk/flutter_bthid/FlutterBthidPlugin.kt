@@ -91,9 +91,8 @@ private class FlutterBthidApiImplementation(
             sdpDescription,
             sdpProvider,
             // TODO: is this required?
-            //BluetoothHidDevice.SUBCLASS1_COMBO,
-            BluetoothHidDevice.SUBCLASS1_KEYBOARD,
-            DescriptorCollection.KEYBOARD,
+            BluetoothHidDevice.SUBCLASS1_COMBO,
+            DescriptorCollection.MOUSE_KEYBOARD_COMBO,
         )
     }
 
@@ -233,6 +232,7 @@ private class FlutterBthidApiImplementation(
     }
 
     override fun sendReport(
+        id: Long,
         data: List<Long>,
         callback: (Result<Unit>) -> Unit
     ) {
@@ -254,8 +254,7 @@ private class FlutterBthidApiImplementation(
             reportData[index] = value.toByte()
         }
 
-        // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
-        val success = hidDevice!!.sendReport(targetDevice, 1, reportData)
+        val success = hidDevice!!.sendReport(targetDevice, id.toInt(), reportData)
 
         if (success) {
             Log.d(tag, "Successfully sent report")

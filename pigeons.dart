@@ -30,7 +30,7 @@ abstract class FlutterBthidApi {
   BluetoothDeviceInfo? getConnectedDevice();
 
   @async
-  void sendReport(List<int> data);
+  void sendReport(int id, List<int> data);
 
   @async
   List<BluetoothDeviceInfo>? getPairedDevices();

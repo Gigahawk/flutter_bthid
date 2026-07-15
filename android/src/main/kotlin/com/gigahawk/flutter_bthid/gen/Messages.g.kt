@@ -267,7 +267,7 @@ interface FlutterBthidApi {
   fun init(callback: (Result<Unit>) -> Unit)
   fun connect(device: BluetoothDeviceInfo, callback: (Result<Unit>) -> Unit)
   fun getConnectedDevice(callback: (Result<BluetoothDeviceInfo?>) -> Unit)
-  fun sendReport(data: List<Long>, callback: (Result<Unit>) -> Unit)
+  fun sendReport(id: Long, data: List<Long>, callback: (Result<Unit>) -> Unit)
   fun getPairedDevices(callback: (Result<List<BluetoothDeviceInfo>?>) -> Unit)
 
   companion object {
@@ -338,8 +338,9 @@ interface FlutterBthidApi {
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
-            val dataArg = args[0] as List<Long>
-            api.sendReport(dataArg) { result: Result<Unit> ->
+            val idArg = args[0] as Long
+            val dataArg = args[1] as List<Long>
+            api.sendReport(idArg, dataArg) { result: Result<Unit> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(MessagesPigeonUtils.wrapError(error))

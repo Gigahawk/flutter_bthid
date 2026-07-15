@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bthid/flutter_bthid.dart';
 
 class TrackpadSurface extends StatelessWidget {
-  const TrackpadSurface({super.key, this.color = Colors.blueGrey});
+  TrackpadSurface({super.key, this.color = Colors.blueGrey});
+
+  final BluetoothHidManager hidManager = BluetoothHidManager();
 
   final MaterialColor color;
   get decoration =>
@@ -20,6 +23,13 @@ class TrackpadSurface extends StatelessWidget {
             },
             onPanUpdate: (details) {
               print('Pos: ${details.localPosition}  Delta: ${details.delta}');
+              // TODO: Create setting for this
+              double sensitivity = 1.5;
+              double dx = details.delta.dx * sensitivity;
+              double dy = details.delta.dy * sensitivity;
+
+              hidManager.moveMouse(dx.toInt(), dy.toInt());
+
             },
             onPanEnd: (details) {
               print('Finger up. Velocity: ${details.velocity}');
