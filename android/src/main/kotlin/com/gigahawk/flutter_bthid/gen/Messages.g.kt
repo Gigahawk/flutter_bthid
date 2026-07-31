@@ -239,12 +239,62 @@ data class BluetoothDeviceInfo (
     return "BluetoothDeviceInfo(name=$name, deviceClass=$deviceClass, address=$address)"
   }
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class HidDescIds (
+  val keyboardId: Long,
+  val mouseId: Long,
+  val consumerId: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): HidDescIds {
+      val keyboardId = pigeonVar_list[0] as Long
+      val mouseId = pigeonVar_list[1] as Long
+      val consumerId = pigeonVar_list[2] as Long
+      return HidDescIds(keyboardId, mouseId, consumerId)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      keyboardId,
+      mouseId,
+      consumerId,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as HidDescIds
+    return MessagesPigeonUtils.deepEquals(this.keyboardId, other.keyboardId) && MessagesPigeonUtils.deepEquals(this.mouseId, other.mouseId) && MessagesPigeonUtils.deepEquals(this.consumerId, other.consumerId)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.keyboardId)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.mouseId)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.consumerId)
+    return result
+  }
+  override fun toString(): String {
+    return "HidDescIds(keyboardId=$keyboardId, mouseId=$mouseId, consumerId=$consumerId)"
+  }
+}
 private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
       129.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           BluetoothDeviceInfo.fromList(it)
+        }
+      }
+      130.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          HidDescIds.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -254,6 +304,10 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
     when (value) {
       is BluetoothDeviceInfo -> {
         stream.write(129)
+        writeValue(stream, value.toList())
+      }
+      is HidDescIds -> {
+        stream.write(130)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -269,6 +323,7 @@ interface FlutterBthidApi {
   fun getConnectedDevice(callback: (Result<BluetoothDeviceInfo?>) -> Unit)
   fun sendReport(id: Long, data: List<Long>, callback: (Result<Unit>) -> Unit)
   fun getPairedDevices(callback: (Result<List<BluetoothDeviceInfo>?>) -> Unit)
+  fun getHidDescIds(callback: (Result<HidDescIds>) -> Unit)
 
   companion object {
     /** The codec used by FlutterBthidApi. */
@@ -371,6 +426,24 @@ interface FlutterBthidApi {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_bthid.FlutterBthidApi.getHidDescIds$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.getHidDescIds{ result: Result<HidDescIds> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MessagesPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MessagesPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
@@ -380,6 +453,23 @@ class BluetoothEventsApi(private val binaryMessenger: BinaryMessenger, private v
     /** The codec used by BluetoothEventsApi. */
     val codec: MessageCodec<Any?> by lazy {
       MessagesPigeonCodec()
+    }
+  }
+  fun onHidDescIdsReady(idsArg: HidDescIds, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.flutter_bthid.BluetoothEventsApi.onHidDescIdsReady$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(idsArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(MessagesPigeonUtils.createConnectionError(channelName)))
+      } 
     }
   }
   fun onConnectionStateChanged(deviceArg: BluetoothDeviceInfo?, callback: (Result<Unit>) -> Unit)

@@ -15,10 +15,8 @@ class BluetoothHidManager extends BluetoothEventsApi {
   MouseState mouseState = MouseState();
   KeyboardState keyboardState = KeyboardState();
 
-  // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
-  static const int keyboardReportId = 1;
-  // TODO: this is hardcoded to 2 for some reason??? Something to do with HID descriptor
-  static const int mouseReportId = 2;
+  final Completer<HidDescIds> _idsCompleter = Completer<HidDescIds>();
+  Future<HidDescIds> get hidDescIds async => await _idsCompleter.future;
 
   bool _initialized = false;
   final StreamController<BluetoothDeviceInfo?> _connectionStateController =
@@ -51,6 +49,10 @@ class BluetoothHidManager extends BluetoothEventsApi {
       return;
     }
     await _api.init();
+    // Probably unnecessary, but set the ids manually just in case
+    _setHidDescIds(await _api.getHidDescIds());
+
+    _initialized = true;
   }
 
   Future<void> connect(BluetoothDeviceInfo device) async {
@@ -66,22 +68,25 @@ class BluetoothHidManager extends BluetoothEventsApi {
   }
 
   Future<void> sendMouseReport(List<int> data) async {
-    return await sendReport(mouseReportId, data);
+    int id = (await hidDescIds).mouseId;
+    return await sendReport(id, data);
   }
 
   Future<void> sendKey(String char) async {
+    int id = (await hidDescIds).keyboardId;
     const Duration keyDelay = Duration(milliseconds: 40);
-    await sendReport(keyboardReportId, keyboardState.pressKeyFromChar(char));
+    await sendReport(id, keyboardState.pressKeyFromChar(char));
     await Future.delayed(keyDelay);
-    await sendReport(keyboardReportId, keyboardState.reset());
+    await sendReport(id, keyboardState.reset());
     await Future.delayed(keyDelay);
   }
 
   Future<void> sendBackspace() async {
+    int id = (await hidDescIds).keyboardId;
     const Duration keyDelay = Duration(milliseconds: 40);
-    await sendReport(keyboardReportId, keyboardState.keyButton(Keycode.kcBspace, true));
+    await sendReport(id, keyboardState.keyButton(Keycode.kcBspace, true));
     await Future.delayed(keyDelay);
-    await sendReport(keyboardReportId, keyboardState.keyButton(Keycode.kcBspace, false));
+    await sendReport(id, keyboardState.keyButton(Keycode.kcBspace, false));
     await Future.delayed(keyDelay);
   }
 
@@ -122,5 +127,17 @@ class BluetoothHidManager extends BluetoothEventsApi {
   @override
   void onKeyboardLedChanged(int ledMask) {
     print("LED State change: $ledMask");
+  }
+
+  @override
+  void onHidDescIdsReady(HidDescIds ids) {
+    _setHidDescIds(ids);
+  }
+  
+  void _setHidDescIds(HidDescIds ids) {
+    if (!_idsCompleter.isCompleted) {
+      _idsCompleter.complete(ids);
+    }
+    
   }
 }

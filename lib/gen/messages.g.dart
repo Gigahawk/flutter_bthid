@@ -162,6 +162,61 @@ class BluetoothDeviceInfo {
   }
 }
 
+class HidDescIds {
+  HidDescIds({
+    required this.keyboardId,
+    required this.mouseId,
+    required this.consumerId,
+  });
+
+  int keyboardId;
+
+  int mouseId;
+
+  int consumerId;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      keyboardId,
+      mouseId,
+      consumerId,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static HidDescIds decode(Object result) {
+    result as List<Object?>;
+    return HidDescIds(
+      keyboardId: result[0]! as int,
+      mouseId: result[1]! as int,
+      consumerId: result[2]! as int,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! HidDescIds || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(keyboardId, other.keyboardId) && _deepEquals(mouseId, other.mouseId) && _deepEquals(consumerId, other.consumerId);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'HidDescIds(keyboardId: $keyboardId, mouseId: $mouseId, consumerId: $consumerId)';
+  }
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -173,6 +228,9 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is BluetoothDeviceInfo) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
+    }    else if (value is HidDescIds) {
+      buffer.putUint8(130);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -183,6 +241,8 @@ class _PigeonCodec extends StandardMessageCodec {
     switch (type) {
       case 129:
         return BluetoothDeviceInfo.decode(readValue(buffer)!);
+      case 130:
+        return HidDescIds.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -293,10 +353,31 @@ class FlutterBthidApi {
     ;
     return (pigeonVar_replyValue as List<Object?>?)?.cast<BluetoothDeviceInfo>();
   }
+
+  Future<HidDescIds> getHidDescIds() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.flutter_bthid.FlutterBthidApi.getHidDescIds$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as HidDescIds;
+  }
 }
 
 abstract class BluetoothEventsApi {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
+
+  void onHidDescIdsReady(HidDescIds ids);
 
   void onConnectionStateChanged(BluetoothDeviceInfo? device);
 
@@ -304,6 +385,27 @@ abstract class BluetoothEventsApi {
 
   static void setUp(BluetoothEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.flutter_bthid.BluetoothEventsApi.onHidDescIdsReady$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final HidDescIds arg_ids = args[0]! as HidDescIds;
+          try {
+            api.onHidDescIdsReady(arg_ids);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
           'dev.flutter.pigeon.flutter_bthid.BluetoothEventsApi.onConnectionStateChanged$messageChannelSuffix', pigeonChannelCodec,

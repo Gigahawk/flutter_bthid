@@ -18,6 +18,13 @@ class BluetoothDeviceInfo {
   final String address;
 }
 
+class HidDescIds {
+  HidDescIds({required this.keyboardId, required this.mouseId, required this.consumerId});
+  final int keyboardId;
+  final int mouseId;
+  final int consumerId;
+}
+
 @HostApi()
 abstract class FlutterBthidApi {
   @async
@@ -34,10 +41,17 @@ abstract class FlutterBthidApi {
 
   @async
   List<BluetoothDeviceInfo>? getPairedDevices();
+
+  // Hack to keep constant ID values stored on the kotlin side
+  @async
+  HidDescIds getHidDescIds();
 }
 
 @FlutterApi()
 abstract class BluetoothEventsApi {
+  // Hack to keep constant ID values stored on the kotlin side
+  void onHidDescIdsReady(HidDescIds ids);
+
   void onConnectionStateChanged(BluetoothDeviceInfo? device);
 
   void onKeyboardLedChanged(int ledMask);

@@ -13,6 +13,7 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import com.gigahawk.flutter_bthid.gen.BluetoothDeviceInfo
 import com.gigahawk.flutter_bthid.gen.FlutterBthidApi
 import com.gigahawk.flutter_bthid.gen.BluetoothEventsApi
+import com.gigahawk.flutter_bthid.gen.HidDescIds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -137,6 +138,8 @@ private class FlutterBthidApiImplementation(
 
     // TODO: support setting sdp and qos settings
     override fun init(callback: (Result<Unit>) -> Unit) {
+        eventsApi.onHidDescIdsReady(DescriptorCollection.HID_DESCRIPTOR_IDS) {}
+
         adapter.getProfileProxy(
             context,
             object : BluetoothProfile.ServiceListener {
@@ -188,6 +191,10 @@ private class FlutterBthidApiImplementation(
             BluetoothProfile.HID_DEVICE,
         )
         callback(Result.success(Unit))
+    }
+
+    override fun getHidDescIds(callback: (Result<HidDescIds>) -> Unit) {
+        callback(Result.success(DescriptorCollection.HID_DESCRIPTOR_IDS))
     }
 
     override fun connect(device: BluetoothDeviceInfo, callback: (Result<Unit>) -> Unit) {

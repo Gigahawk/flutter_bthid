@@ -1,15 +1,28 @@
 package com.gigahawk.flutter_bthid
 
+import com.gigahawk.flutter_bthid.gen.HidDescIds
+
 @Suppress("MagicNumber", "LargeClass")
 object DescriptorCollection {
 
+  
+  val KEYBOARD_REPORT_ID = 0x01L
+  val MOUSE_REPORT_ID = 0x02L
+  val CONSUMER_REPORT_ID = 0x03L
+
+  val HID_DESCRIPTOR_IDS = HidDescIds(
+    keyboardId = KEYBOARD_REPORT_ID,
+    mouseId = MOUSE_REPORT_ID,
+    consumerId = CONSUMER_REPORT_ID,
+  )
+  
   // BluetoothHidDevice.SUBCLASS1_COMBO
   val MOUSE_KEYBOARD_COMBO =
     byteArrayOf(
       0x05.toByte(), 0x01.toByte(), // USAGE_PAGE (Generic Desktop)
       0x09.toByte(), 0x06.toByte(), // USAGE (Keyboard)
       0xa1.toByte(), 0x01.toByte(), // COLLECTION (Application)
-      0x85.toByte(), 0x01.toByte(), // REPORT_ID (1)
+      0x85.toByte(), KEYBOARD_REPORT_ID.toByte(), // REPORT_ID
       0x05.toByte(), 0x07.toByte(), // USAGE_PAGE (Keyboard/Keypad)
       0x19.toByte(), 0xe0.toByte(), // USAGE_MINIMUM (0xe0)
       0x29.toByte(), 0xe7.toByte(), // USAGE_MAXIMUM (0xe7)
@@ -33,7 +46,7 @@ object DescriptorCollection {
       0x05.toByte(), 0x0c.toByte(), // USAGE_PAGE (Consumer)
       0x09.toByte(), 0x01.toByte(), // USAGE (Consumer Control)
       0xa1.toByte(), 0x01.toByte(), // COLLECTION (Application)
-      0x85.toByte(), 0x03.toByte(), // REPORT_ID (3)
+      0x85.toByte(), CONSUMER_REPORT_ID.toByte(), // REPORT_ID
       0x19.toByte(), 0x00.toByte(), // USAGE_MINIMUM (0x0)
       0x2a.toByte(), 0xff.toByte(), 0x03.toByte(), // USAGE_MAXIMUM (0x3ff)
       0x75.toByte(), 0x0c.toByte(), // REPORT_SIZE (12)
@@ -48,7 +61,7 @@ object DescriptorCollection {
       0x05.toByte(), 0x01.toByte(), // USAGE_PAGE (Generic Desktop)
       0x09.toByte(), 0x02.toByte(), // USAGE (Mouse)
       0xa1.toByte(), 0x01.toByte(), // COLLECTION (Application)
-      0x85.toByte(), 0x02.toByte(), // REPORT_ID (2)
+      0x85.toByte(), MOUSE_REPORT_ID.toByte(), // REPORT_ID (2)
       0x09.toByte(), 0x01.toByte(), // USAGE (Pointer)
       0xa1.toByte(), 0x00.toByte(), // COLLECTION (Physical)
       0x05.toByte(), 0x09.toByte(), // USAGE_PAGE (Button)
