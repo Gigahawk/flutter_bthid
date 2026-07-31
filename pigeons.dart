@@ -39,4 +39,6 @@ abstract class FlutterBthidApi {
 @FlutterApi()
 abstract class BluetoothEventsApi {
   void onConnectionStateChanged(BluetoothDeviceInfo? device);
+
+  void onKeyboardLedChanged(int ledMask);
 }

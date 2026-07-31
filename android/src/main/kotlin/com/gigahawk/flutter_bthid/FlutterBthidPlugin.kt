@@ -79,6 +79,18 @@ private class FlutterBthidApiImplementation(
                 Log.d(tag, "onAppStatusChanged: ${pluggedDevice?.name}, $registered")
                 super.onAppStatusChanged(pluggedDevice, registered)
             }
+
+            override fun onSetReport(
+              device: AndroidBluetoothDevice,
+              type: Byte,
+              id: Byte,
+              data: ByteArray
+            ) {
+                if (type == BluetoothHidDevice.REPORT_TYPE_OUTPUT && data.isNotEmpty()) {
+                    val ledMask = data[0].toInt()
+                    eventsApi.onKeyboardLedChanged(ledMask.toLong()) {}
+                }
+            }
         }
 
     private var sdpName: String = "flutter_bthid"

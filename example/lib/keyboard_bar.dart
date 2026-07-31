@@ -77,6 +77,7 @@ class _KeyboardBarState extends State<KeyboardBar> {
                     final text = _textController.text;
                     if (text.isNotEmpty) {
                       print("Sending ${jsonEncode(text)}");
+                      hidManager.sendString(text);
                       _textController.clear();
                     }
                   },
@@ -117,10 +118,11 @@ class _KeyboardBarState extends State<KeyboardBar> {
 
                 if (value.isEmpty) {
                   print("Sending backspace");
+                  hidManager.sendBackspace();
                 } else if (value.length > 1) {
                   String char = value.substring(1);
                   print("Sending ${jsonEncode(char)}");
-                  hidManager.sendAKey();
+                  hidManager.sendString(char);
                 }
 
                 _resetDirectContents();

@@ -1,6 +1,10 @@
 
 import 'dart:async';
+import 'package:flutter/material.dart';
+
 import 'gen/messages.g.dart';
+import 'keyboard_state.dart';
+import 'keycode.dart';
 import 'mouse_state.dart';
 
 final FlutterBthidApi _api = FlutterBthidApi();
@@ -9,6 +13,10 @@ class BluetoothHidManager extends BluetoothEventsApi {
   static final BluetoothHidManager _singleton = BluetoothHidManager._internal();
 
   MouseState mouseState = MouseState();
+  KeyboardState keyboardState = KeyboardState();
+
+  // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
+  static const int keyboardReportId = 1;
   // TODO: this is hardcoded to 2 for some reason??? Something to do with HID descriptor
   static const int mouseReportId = 2;
 
@@ -20,6 +28,8 @@ class BluetoothHidManager extends BluetoothEventsApi {
   /// Emits the [BluetoothDeviceInfo] when connected, and `null` when disconnected.
   Stream<BluetoothDeviceInfo?> get connectionStateStream =>
       _connectionStateController.stream;
+
+
 
   factory BluetoothHidManager() {
     return _singleton;
@@ -59,15 +69,26 @@ class BluetoothHidManager extends BluetoothEventsApi {
     return await sendReport(mouseReportId, data);
   }
 
-  // TODO: idk
-  Future<void> sendAKey() async {
-    const int key = 0x04;
-    // TODO: this is hardcoded to 1 for some reason??? Something to do with HID descriptor
-    const int reportId = 1;
-    await sendReport(reportId, [0x00, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00]);
-    await Future.delayed(const Duration(milliseconds: 1000));
-    await sendReport(reportId, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+  Future<void> sendKey(String char) async {
+    const Duration keyDelay = Duration(milliseconds: 40);
+    await sendReport(keyboardReportId, keyboardState.pressKeyFromChar(char));
+    await Future.delayed(keyDelay);
+    await sendReport(keyboardReportId, keyboardState.reset());
+    await Future.delayed(keyDelay);
+  }
 
+  Future<void> sendBackspace() async {
+    const Duration keyDelay = Duration(milliseconds: 40);
+    await sendReport(keyboardReportId, keyboardState.keyButton(Keycode.kcBspace, true));
+    await Future.delayed(keyDelay);
+    await sendReport(keyboardReportId, keyboardState.keyButton(Keycode.kcBspace, false));
+    await Future.delayed(keyDelay);
+  }
+
+  Future<void> sendString(String str) async {
+    for (final char in str.split('')) {
+      await sendKey(char);
+    }
   }
 
   Future<void> moveMouse(int x, int y) async {
@@ -96,5 +117,10 @@ class BluetoothHidManager extends BluetoothEventsApi {
   @override
   void onConnectionStateChanged(BluetoothDeviceInfo? device) {
     _connectionStateController.add(device);
+  }
+
+  @override
+  void onKeyboardLedChanged(int ledMask) {
+    print("LED State change: $ledMask");
   }
 }

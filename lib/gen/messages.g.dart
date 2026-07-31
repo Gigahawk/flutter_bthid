@@ -300,6 +300,8 @@ abstract class BluetoothEventsApi {
 
   void onConnectionStateChanged(BluetoothDeviceInfo? device);
 
+  void onKeyboardLedChanged(int ledMask);
+
   static void setUp(BluetoothEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
@@ -314,6 +316,27 @@ abstract class BluetoothEventsApi {
           final BluetoothDeviceInfo? arg_device = args[0] as BluetoothDeviceInfo?;
           try {
             api.onConnectionStateChanged(arg_device);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.flutter_bthid.BluetoothEventsApi.onKeyboardLedChanged$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final int arg_ledMask = args[0]! as int;
+          try {
+            api.onKeyboardLedChanged(arg_ledMask);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
